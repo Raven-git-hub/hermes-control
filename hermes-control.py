@@ -21,8 +21,8 @@ import os
 POLL_INTERVAL = 3000  # ms
 STATS_PORT = 8099
 N8N_PORT = 5678
-WINDOW_WIDTH = 400
-WINDOW_HEIGHT = 840
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 560
 
 COLORS = {
     "bg":         (0.05, 0.05, 0.05),
@@ -35,6 +35,37 @@ COLORS = {
     "text":       (0.85, 0.85, 0.85),
     "text_dim":   (0.45, 0.45, 0.45),
 }
+
+
+# -----------------------------------------
+# Autostart
+# -----------------------------------------
+AUTOSTART_DIR  = os.path.expanduser('~/.config/autostart')
+AUTOSTART_FILE = os.path.join(AUTOSTART_DIR, 'hermes-control.desktop')
+
+def autostart_is_enabled():
+    return os.path.exists(AUTOSTART_FILE)
+
+def autostart_enable():
+    os.makedirs(AUTOSTART_DIR, exist_ok=True)
+    main_py = os.path.abspath(__file__)
+    python  = sys.executable
+    desktop = f"""[Desktop Entry]
+Type=Application
+Name=Hermes Control
+Comment=Hermes travel automation control panel
+Exec={python} {main_py}
+Icon=network-wireless-symbolic
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+"""
+    with open(AUTOSTART_FILE, 'w') as f:
+        f.write(desktop)
+
+def autostart_disable():
+    if os.path.exists(AUTOSTART_FILE):
+        os.remove(AUTOSTART_FILE)
 
 # -----------------------------------------
 # State
@@ -155,7 +186,7 @@ class HermesPanel(Gtk.Window):
             border: 1px solid #333;
             border-radius: 4px;
             font-family: monospace;
-            font-size: 11px;
+            font-size: 22px;
             padding: 4px 8px;
             min-height: 0;
         }
@@ -172,12 +203,12 @@ class HermesPanel(Gtk.Window):
             border: 1px solid #333;
             border-radius: 4px;
             font-family: monospace;
-            font-size: 11px;
+            font-size: 22px;
         }
         label { color: #dddddd; font-family: monospace; }
         .dim { color: #555555; }
-        .title { color: #00dddd; font-weight: bold; font-size: 13px; }
-        .section { color: #00dddd; font-size: 9px; }
+        .title { color: #00dddd; font-weight: bold; font-size: 26px; }
+        .section { color: #00dddd; font-size: 18px; }
         .connected { color: #00dd40; }
         .disconnected { color: #dd2222; }
         separator { background: #222222; }
@@ -548,6 +579,13 @@ class HermesControl:
 
         menu.append(Gtk.SeparatorMenuItem())
 
+        autostart_label = "Disable Autostart" if autostart_is_enabled() else "Enable Autostart"
+        self.autostart_item = Gtk.MenuItem(label=autostart_label)
+        self.autostart_item.connect("activate", self.toggle_autostart)
+        menu.append(self.autostart_item)
+
+        menu.append(Gtk.SeparatorMenuItem())
+
         quit_item = Gtk.MenuItem(label="Quit")
         quit_item.connect("activate", Gtk.main_quit)
         menu.append(quit_item)
@@ -565,6 +603,14 @@ class HermesControl:
             self.panel.move(screen_w - WINDOW_WIDTH - 10, 40)
         else:
             self.panel.hide()
+
+    def toggle_autostart(self, source=None):
+        if autostart_is_enabled():
+            autostart_disable()
+            self.autostart_item.set_label("Enable Autostart")
+        else:
+            autostart_enable()
+            self.autostart_item.set_label("Disable Autostart")
 
 # -----------------------------------------
 # Entry point
