@@ -21,8 +21,8 @@ import os
 POLL_INTERVAL = 3000  # ms
 STATS_PORT = 8099
 N8N_PORT = 5678
-WINDOW_WIDTH = 200
-WINDOW_HEIGHT = 420
+WINDOW_WIDTH = 400
+WINDOW_HEIGHT = 840
 
 COLORS = {
     "bg":         (0.05, 0.05, 0.05),
@@ -560,6 +560,9 @@ class HermesControl:
             self.panel = HermesPanel()
             self.panel.connect("delete-event", lambda w, e: w.hide() or True)
             self.panel.show_all()
+            screen = Gdk.Screen.get_default()
+            screen_w = screen.get_width()
+            self.panel.move(screen_w - WINDOW_WIDTH - 10, 40)
         else:
             self.panel.hide()
 
